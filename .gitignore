@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 .idea/
 .vscode/
 /data/
@@ -14,6 +15,20 @@ data/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+=======
+HELP.md
+target/
+data/
+.env
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+*.log
+
+# Project specific
+/secure-dms/data/
+/secure-dms/target/
+>>>>>>> 24af43d7c0ed6cd3da3a1ae50fdc2bff209a1ed5
 
 ### STS ###
 .apt_generated
@@ -42,4 +57,7 @@ build/
 
 ### VS Code ###
 .vscode/
+<<<<<<< HEAD
 >>>>>>> 91fd442a5ddfeca7c14ff6656cfc3efea4aef51d
+=======
+>>>>>>> 24af43d7c0ed6cd3da3a1ae50fdc2bff209a1ed5
