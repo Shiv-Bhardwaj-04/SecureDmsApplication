@@ -1,0 +1,7 @@
+.idea/
+.vscode/
+/data/
+/secure-dms/data/
+/secure-dms/target/
+.env
+*.log
