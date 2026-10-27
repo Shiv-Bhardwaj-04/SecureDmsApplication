@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Review Queue · Secure DMS</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div th:replace="~{fragments/layout :: topbar(${user})}"></div>
+<main class="page-shell">
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <section class="page-intro compact">
+        <div>
+            <p class="eyebrow">Legal Reviewer workspace</p>
+            <h1>Review the submitted evidence, never alter it.</h1>
+            <p>Open a document to inspect its encrypted-file fingerprint, download a specific version, and approve or return it with a tracked note.</p>
+        </div>
+        <div class="metrics one"><div><strong th:text="${#lists.size(reviewQueue)}">0</strong><span>Awaiting review</span></div></div>
+    </section>
+
+    <section class="card table-card emphasis-card">
+        <div class="card-heading"><div><p class="eyebrow">Action needed</p><h2>Submitted review queue</h2></div><span class="security-tag">Assigned cases only</span></div>
+        <div class="empty-state" th:if="${#lists.isEmpty(reviewQueue)}">Your review queue is clear.</div>
+        <div class="table-wrap" th:unless="${#lists.isEmpty(reviewQueue)}">
+            <table>
+                <thead><tr><th>Document</th><th>Case</th><th>Submitted by</th><th>Fingerprint</th><th></th></tr></thead>
+                <tbody>
+                <tr th:each="document : ${reviewQueue}">
+                    <td><strong th:text="${document.title}">Document</strong><span class="secondary" th:text="${document.documentType}">FIR</span></td>
+                    <td th:text="${document.caseFile.caseNumber}">FIR/2026/001</td>
+                    <td th:text="${document.uploadedBy.fullName}">Officer</td>
+                    <td class="hash" th:text="${document.currentVersion.sha256}">SHA-256</td>
+                    <td><a class="button-link" th:href="@{/documents/{id}(id=${document.id})}">Review</a></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="card table-card">
+        <div class="card-heading"><div><p class="eyebrow">Assigned evidence register</p><h2>All visible documents</h2></div></div>
+        <div class="empty-state" th:if="${#lists.isEmpty(documents)}">No cases or documents are assigned to you.</div>
+        <div class="table-wrap" th:unless="${#lists.isEmpty(documents)}">
+            <table>
+                <thead><tr><th>Document</th><th>Case</th><th>Status</th><th>Current version</th><th></th></tr></thead>
+                <tbody>
+                <tr th:each="document : ${documents}">
+                    <td><strong th:text="${document.title}">Document</strong><span class="secondary" th:text="${document.documentType}">FIR</span></td>
+                    <td th:text="${document.caseFile.caseNumber}">FIR/2026/001</td>
+                    <td><span class="pill" th:classappend="${' status-' + document.status}" th:text="${document.status}">UNDER_REVIEW</span></td>
+                    <td th:text="${'v' + document.currentVersion.versionNumber}">v1</td>
+                    <td><a class="text-link" th:href="@{/documents/{id}(id=${document.id})}">Open</a></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+</body>
+</html>

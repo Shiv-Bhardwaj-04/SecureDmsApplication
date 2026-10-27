@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Document Detail · Secure DMS</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div th:replace="~{fragments/layout :: topbar(${user})}"></div>
+<main class="page-shell">
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <section class="detail-heading">
+        <div>
+            <a class="back-link" th:if="${user.role.name() == 'ADMIN'}" th:href="@{/admin}">← Case Admin</a>
+            <a class="back-link" th:if="${user.role.name() == 'IO'}" th:href="@{/io}">← My Cases</a>
+            <a class="back-link" th:if="${user.role.name() == 'REVIEWER'}" th:href="@{/reviewer}">← Review Queue</a>
+            <a class="back-link" th:if="${user.role.name() == 'AUDITOR'}" th:href="@{/auditor}">← Audit Trail</a>
+            <p class="eyebrow" th:text="${details.document.caseFile.caseNumber}">FIR/2026/001</p>
+            <h1 th:text="${details.document.title}">Document title</h1>
+            <p th:text="${details.document.documentType + ' · Uploaded by ' + details.document.uploadedBy.fullName}">Document type</p>
+        </div>
+        <span class="pill large" th:classappend="${' status-' + details.document.status}" th:text="${details.document.status}">DRAFT</span>
+    </section>
+
+    <section class="layout-two-column detail-grid">
+        <article class="card evidence-card">
+            <div class="card-heading"><div><p class="eyebrow">Current evidence version</p><h2 th:text="${'Version ' + details.document.currentVersion.versionNumber}">Version 1</h2></div></div>
+            <dl class="metadata-list">
+                <div><dt>Original filename</dt><dd th:text="${details.document.currentVersion.originalFilename}">file.pdf</dd></div>
+                <div><dt>Size</dt><dd th:text="${details.document.currentVersion.byteSize + ' bytes'}">0 bytes</dd></div>
+                <div class="wide"><dt>SHA-256 evidence fingerprint</dt><dd class="hash" th:text="${details.document.currentVersion.sha256}">SHA-256</dd></div>
+                <div><dt>Encrypted storage</dt><dd>AES-256-GCM at rest</dd></div>
+                <div><dt>Created</dt><dd th:text="${details.document.currentVersion.createdAt}">Time</dd></div>
+            </dl>
+            <a class="primary button-link download-button" th:href="@{/documents/{documentId}/versions/{versionNumber}/download(documentId=${details.document.id},versionNumber=${details.document.currentVersion.versionNumber})}">Download current version</a>
+        </article>
+
+        <article class="card action-card" th:if="${details.canReplace}">
+            <p class="eyebrow">Officer action</p>
+            <h2>Revise or submit</h2>
+            <p class="muted">A replacement creates a new encrypted version. Earlier versions remain in the evidence history.</p>
+            <form th:action="@{/io/documents/{id}/versions(id=${details.document.id})}" method="post" enctype="multipart/form-data" class="stacked-form">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <label>New file version
+                    <input type="file" name="file" accept=".pdf,.txt,.csv,.doc,.docx,.png,.jpg,.jpeg" required>
+                </label>
+                <button class="secondary-button" type="submit">Add encrypted version</button>
+            </form>
+            <form th:action="@{/io/documents/{id}/submit(id=${details.document.id})}" method="post" class="submit-form">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <button class="primary" type="submit">Submit for legal review</button>
+            </form>
+        </article>
+
+        <article class="card action-card" th:if="${details.canReview}">
+            <p class="eyebrow">Legal review</p>
+            <h2>Approve or return</h2>
+            <p class="muted">Approval locks this logical document. A returned document requires an explanation and can only be revised as a new version.</p>
+            <form th:action="@{/reviewer/documents/{id}/approve(id=${details.document.id})}" method="post" class="stacked-form">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <label>Optional approval note
+                    <textarea name="comment" rows="3" maxlength="2000" placeholder="Visible to the assigned officer"></textarea>
+                </label>
+                <button class="primary" type="submit">Approve and lock</button>
+            </form>
+            <form th:action="@{/reviewer/documents/{id}/return(id=${details.document.id})}" method="post" class="stacked-form warning-action">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <label>Required revision note
+                    <textarea name="comment" rows="3" maxlength="2000" required placeholder="State what must be corrected"></textarea>
+                </label>
+                <button class="danger-button" type="submit">Return for revision</button>
+            </form>
+        </article>
+
+        <article class="card action-card" th:unless="${details.canReplace or details.canReview}">
+            <p class="eyebrow">Read-only state</p>
+            <h2>No workflow action is available.</h2>
+            <p class="muted">Your role can inspect and download this document, but only the assigned officer or reviewer can advance its workflow.</p>
+        </article>
+    </section>
+
+    <section class="card table-card">
+        <div class="card-heading"><div><p class="eyebrow">Version history</p><h2>Immutable file versions</h2></div></div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Version</th><th>Filename</th><th>Created by</th><th>SHA-256 fingerprint</th><th></th></tr></thead>
+                <tbody>
+                <tr th:each="version : ${details.versions}">
+                    <td th:text="${'v' + version.versionNumber}">v1</td>
+                    <td th:text="${version.originalFilename}">file.pdf</td>
+                    <td th:text="${version.createdBy.fullName}">Officer</td>
+                    <td class="hash" th:text="${version.sha256}">SHA-256</td>
+                    <td><a class="text-link" th:href="@{/documents/{documentId}/versions/{versionNumber}/download(documentId=${details.document.id},versionNumber=${version.versionNumber})}">Download</a></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="card comments-card">
+        <div class="card-heading"><div><p class="eyebrow">Review record</p><h2>Comments</h2></div></div>
+        <div class="empty-state" th:if="${#lists.isEmpty(details.comments)}">No review comments yet.</div>
+        <ol class="comment-list" th:unless="${#lists.isEmpty(details.comments)}">
+            <li th:each="comment : ${details.comments}">
+                <div><strong th:text="${comment.author.fullName}">Reviewer</strong><span th:text="${comment.createdAt}">Time</span></div>
+                <p th:text="${comment.message}">Comment</p>
+            </li>
+        </ol>
+    </section>
+</main>
+</body>
+</html>

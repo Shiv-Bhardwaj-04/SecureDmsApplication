@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Case Admin · Secure DMS</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div th:replace="~{fragments/layout :: topbar(${user})}"></div>
+<main class="page-shell">
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <section class="page-intro">
+        <div>
+            <p class="eyebrow">Case administration</p>
+            <h1>Assign the people before the evidence arrives.</h1>
+            <p>Create a case once, then its IO and Legal Reviewer become the object-level access boundary for every document.</p>
+        </div>
+        <div class="metrics">
+            <div><strong th:text="${#lists.size(cases)}">0</strong><span>Cases</span></div>
+            <div><strong th:text="${#lists.size(documents)}">0</strong><span>Documents</span></div>
+        </div>
+    </section>
+
+    <section class="layout-two-column">
+        <article class="card form-card">
+            <div class="card-heading">
+                <div><p class="eyebrow">New case</p><h2>Create and assign</h2></div>
+                <span class="security-tag">Admin only</span>
+            </div>
+            <form th:action="@{/admin/cases}" method="post" class="form-grid">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <label>Case number
+                    <input name="caseNumber" placeholder="FIR/2026/001" maxlength="64" required>
+                </label>
+                <label>Case title
+                    <input name="title" placeholder="Short identifying title" maxlength="200" required>
+                </label>
+                <label class="full-width">Description <span class="optional">optional</span>
+                    <textarea name="description" rows="3" maxlength="2000" placeholder="Minimum context needed for authorized staff"></textarea>
+                </label>
+                <label>Sensitivity
+                    <select name="sensitivityLevel" required>
+                        <option th:each="level : ${sensitivityLevels}" th:value="${level}" th:text="${level}"></option>
+                    </select>
+                </label>
+                <label>Investigating Officer
+                    <select name="officerId" required>
+                        <option value="">Choose an officer</option>
+                        <option th:each="officer : ${officers}" th:value="${officer.id}" th:text="${officer.fullName + ' · ' + officer.email}"></option>
+                    </select>
+                </label>
+                <label class="full-width">Legal Reviewer
+                    <select name="reviewerId" required>
+                        <option value="">Choose a reviewer</option>
+                        <option th:each="reviewer : ${reviewers}" th:value="${reviewer.id}" th:text="${reviewer.fullName + ' · ' + reviewer.email}"></option>
+                    </select>
+                </label>
+                <button class="primary full-width" type="submit">Create secure case</button>
+            </form>
+        </article>
+
+        <article class="card security-card">
+            <p class="eyebrow">What this enforces</p>
+            <h2>Case-level access, not just hidden buttons.</h2>
+            <ul class="check-list">
+                <li>The assigned IO can upload and revise only this case's documents.</li>
+                <li>The assigned reviewer sees only documents submitted to their cases.</li>
+                <li>Every creation and workflow action is HMAC-linked to the audit chain.</li>
+                <li>Admins manage assignments; they do not silently edit approved evidence.</li>
+            </ul>
+        </article>
+    </section>
+
+    <section class="card table-card">
+        <div class="card-heading"><div><p class="eyebrow">System case register</p><h2>Assigned cases</h2></div></div>
+        <div class="empty-state" th:if="${#lists.isEmpty(cases)}">No cases yet. Create the first one above.</div>
+        <div class="table-wrap" th:unless="${#lists.isEmpty(cases)}">
+            <table>
+                <thead><tr><th>Case</th><th>Sensitivity</th><th>Investigating Officer</th><th>Legal Reviewer</th><th>Status</th></tr></thead>
+                <tbody>
+                <tr th:each="caseFile : ${cases}">
+                    <td><strong th:text="${caseFile.caseNumber}">FIR/2026/001</strong><span class="secondary" th:text="${caseFile.title}">Title</span></td>
+                    <td><span class="pill sensitivity" th:text="${caseFile.sensitivityLevel}">CONFIDENTIAL</span></td>
+                    <td th:text="${caseFile.investigatingOfficer.fullName}">Officer</td>
+                    <td th:text="${caseFile.reviewer.fullName}">Reviewer</td>
+                    <td><span class="pill neutral" th:text="${caseFile.status}">ACTIVE</span></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+</body>
+</html>
