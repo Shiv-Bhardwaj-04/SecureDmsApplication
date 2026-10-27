@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<header class="topbar" th:fragment="topbar(user)">
+    <a class="brand" th:href="@{/}">Secure DMS <span>Evidence Workspace</span></a>
+    <nav class="topnav" aria-label="Primary navigation">
+        <a th:if="${user.role.name() == 'ADMIN'}" th:href="@{/admin}">Case Admin</a>
+        <a th:if="${user.role.name() == 'IO'}" th:href="@{/io}">My Cases</a>
+        <a th:if="${user.role.name() == 'REVIEWER'}" th:href="@{/reviewer}">Review Queue</a>
+        <a th:if="${user.role.name() == 'AUDITOR'}" th:href="@{/auditor}">Audit Trail</a>
+    </nav>
+    <div class="user-menu">
+        <span class="role" th:text="${user.role}">ROLE</span>
+        <span th:text="${user.fullName}">User</span>
+        <form class="logout" th:action="@{/logout}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <button type="submit">Log out</button>
+        </form>
+    </div>
+</header>
+
+<div class="flash-stack" th:fragment="flash">
+    <p class="flash success" th:if="${success}" th:text="${success}"></p>
+    <p class="flash error" th:if="${error}" th:text="${error}"></p>
+</div>
+</body>
+</html>
