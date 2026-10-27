@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Secure DMS — Login</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div class="login-wrap">
+    <h1>Secure DMS</h1>
+    <p class="sub">NCRB Women Safety Division — demo</p>
+
+    <div class="error" th:if="${param.error}">Incorrect email or password.</div>
+
+    <form th:action="@{/login}" method="post">
+        <input type="email" name="username" placeholder="Email" required autofocus>
+        <input type="password" name="password" placeholder="Password" required>
+        <button type="submit">Log in</button>
+    </form>
+
+    <p class="demo-note">
+        Demo accounts (password: Demo@123)<br>
+        anita@dms.gov.in (Admin) &middot; priya@dms.gov.in (IO)<br>
+        karan@dms.gov.in (Reviewer) &middot; vikram@dms.gov.in (Auditor)
+    </p>
+</div>
+</body>
+</html>

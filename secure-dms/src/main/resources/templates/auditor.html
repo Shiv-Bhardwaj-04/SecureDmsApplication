@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Audit Trail · Secure DMS</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div th:replace="~{fragments/layout :: topbar(${user})}"></div>
+<main class="page-shell">
+    <section class="page-intro compact">
+        <div>
+            <p class="eyebrow">Read-only oversight</p>
+            <h1>Verify the history, not just read it.</h1>
+            <p>Each event is HMAC-signed and linked to the prior event. A database change without the signing key breaks verification.</p>
+        </div>
+    </section>
+
+    <section class="integrity-panel" th:classappend="${integrity.intact ? ' intact' : ' compromised'}">
+        <div>
+            <p class="eyebrow">Audit chain verification</p>
+            <h2 th:text="${integrity.intact ? 'Integrity check passed' : 'Integrity check failed'}">Integrity check passed</h2>
+            <p th:text="${integrity.message}">All event links and HMAC signatures are valid.</p>
+        </div>
+        <div class="integrity-count"><strong th:text="${integrity.eventsChecked}">0</strong><span>events checked</span></div>
+    </section>
+
+    <section class="card table-card">
+        <div class="card-heading"><div><p class="eyebrow">Latest activity</p><h2>Hash-chained audit events</h2></div><span class="security-tag">Read-only</span></div>
+        <div class="empty-state" th:if="${#lists.isEmpty(events)}">No activity has been recorded yet.</div>
+        <div class="table-wrap" th:unless="${#lists.isEmpty(events)}">
+            <table>
+                <thead><tr><th>When</th><th>Actor</th><th>Action</th><th>Case / Document</th><th>Event HMAC</th></tr></thead>
+                <tbody>
+                <tr th:each="event : ${events}">
+                    <td class="timestamp" th:text="${event.occurredAt}">Time</td>
+                    <td th:text="${event.actorEmail}">actor@dms.gov.in</td>
+                    <td><span class="pill neutral" th:text="${event.action}">ACTION</span></td>
+                    <td th:text="${'Case #' + (event.caseFileId == null ? '—' : event.caseFileId) + ' · Doc #' + (event.documentId == null ? '—' : event.documentId)}">Case / Doc</td>
+                    <td class="hash" th:text="${event.eventHash}">HMAC</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="card table-card">
+        <div class="card-heading"><div><p class="eyebrow">Evidence register</p><h2>Read-only document access</h2></div></div>
+        <div class="empty-state" th:if="${#lists.isEmpty(documents)}">No documents have been stored yet.</div>
+        <div class="table-wrap" th:unless="${#lists.isEmpty(documents)}">
+            <table>
+                <thead><tr><th>Document</th><th>Case</th><th>Status</th><th>Fingerprint</th><th></th></tr></thead>
+                <tbody>
+                <tr th:each="document : ${documents}">
+                    <td><strong th:text="${document.title}">Document</strong><span class="secondary" th:text="${document.documentType}">FIR</span></td>
+                    <td th:text="${document.caseFile.caseNumber}">FIR/2026/001</td>
+                    <td><span class="pill" th:classappend="${' status-' + document.status}" th:text="${document.status}">DRAFT</span></td>
+                    <td class="hash" th:text="${document.currentVersion.sha256}">SHA-256</td>
+                    <td><a class="text-link" th:href="@{/documents/{id}(id=${document.id})}">Inspect</a></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+</body>
+</html>
