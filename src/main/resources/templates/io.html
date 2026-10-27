@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>My Cases · Secure DMS</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div th:replace="~{fragments/layout :: topbar(${user})}"></div>
+<main class="page-shell">
+    <div th:replace="~{fragments/layout :: flash}"></div>
+    <section class="page-intro compact">
+        <div>
+            <p class="eyebrow">Investigating Officer workspace</p>
+            <h1>Upload evidence without losing its chain of custody.</h1>
+            <p>Files are AES-GCM encrypted at rest. Each version gets its own SHA-256 fingerprint and cannot replace an earlier version.</p>
+        </div>
+    </section>
+
+    <section class="layout-two-column">
+        <article class="card form-card">
+            <div class="card-heading"><div><p class="eyebrow">New evidence record</p><h2>Upload a draft</h2></div><span class="security-tag">25 MB max</span></div>
+            <div class="empty-state" th:if="${#lists.isEmpty(cases)}">You have no assigned cases yet. Ask the Case Admin to assign one.</div>
+            <form th:unless="${#lists.isEmpty(cases)}" th:action="@{/io/documents}" method="post" enctype="multipart/form-data" class="form-grid">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <label class="full-width">Case
+                    <select name="caseId" required>
+                        <option value="">Choose your assigned case</option>
+                        <option th:each="caseFile : ${cases}" th:value="${caseFile.id}" th:text="${caseFile.caseNumber + ' · ' + caseFile.title}"></option>
+                    </select>
+                </label>
+                <label>Document title
+                    <input name="title" maxlength="200" placeholder="FIR first information report" required>
+                </label>
+                <label>Document type
+                    <select name="documentType" required>
+                        <option value="">Choose type</option>
+                        <option th:each="type : ${documentTypes}" th:value="${type}" th:text="${type}"></option>
+                    </select>
+                </label>
+                <label class="full-width">File
+                    <input type="file" name="file" accept=".pdf,.txt,.csv,.doc,.docx,.png,.jpg,.jpeg" required>
+                    <span class="help-text">Accepted: PDF, Office, text, CSV, PNG, JPEG. The original name is metadata only; the stored blob uses a random key.</span>
+                </label>
+                <button class="primary full-width" type="submit">Encrypt and save as draft</button>
+            </form>
+        </article>
+
+        <article class="card security-card">
+            <p class="eyebrow">Your access boundary</p>
+            <h2>Only cases assigned to you appear here.</h2>
+            <ul class="check-list">
+                <li>Draft and returned documents may receive a new version.</li>
+                <li>Submitting moves the document into the reviewer’s queue.</li>
+                <li>Approval locks the content; it is never silently overwritten.</li>
+                <li>Open a document to view fingerprints, versions, and review comments.</li>
+            </ul>
+        </article>
+    </section>
+
+    <section class="card table-card">
+        <div class="card-heading"><div><p class="eyebrow">My document register</p><h2>Evidence and filings</h2></div></div>
+        <div class="empty-state" th:if="${#lists.isEmpty(documents)}">No documents uploaded yet.</div>
+        <div class="table-wrap" th:unless="${#lists.isEmpty(documents)}">
+            <table>
+                <thead><tr><th>Document</th><th>Case</th><th>State</th><th>Current fingerprint</th><th></th></tr></thead>
+                <tbody>
+                <tr th:each="document : ${documents}">
+                    <td><strong th:text="${document.title}">Document</strong><span class="secondary" th:text="${document.documentType}">FIR</span></td>
+                    <td th:text="${document.caseFile.caseNumber}">FIR/2026/001</td>
+                    <td><span class="pill" th:classappend="${' status-' + document.status}" th:text="${document.status}">DRAFT</span></td>
+                    <td class="hash" th:text="${document.currentVersion.sha256}">SHA-256</td>
+                    <td><a class="text-link" th:href="@{/documents/{id}(id=${document.id})}">Open</a></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+</body>
+</html>
